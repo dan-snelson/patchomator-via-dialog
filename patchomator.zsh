@@ -326,7 +326,7 @@ updateScriptLog "PRE-FLIGHT CHECK: Complete"
 
 caffExit () {
     updateScriptLog "${scriptFunctionalName}: De-caffeinate $scriptPID..."
-    kill "$scriptPID"
+    killProcess "$scriptPID"
     exit #$1
 }
 
@@ -364,6 +364,21 @@ fatal() {
 removeInstallomator() {
     updateScriptLog "${scriptFunctionalName}: Removing Installomator..."
     rm -rf ${patchomatorPath}
+}
+
+# Kill a specified process (thanks, @grahampugh!)
+function killProcess() {
+    process="$1"
+    if process_pid=$( pgrep -a "${process}" 2>/dev/null ) ; then
+        updateScriptLog "Attempting to terminate the '$process' process …"
+        updateScriptLog "(Termination message indicates success.)"
+        kill "$process_pid" 2> /dev/null
+        if pgrep -a "$process" >/dev/null ; then
+            updateScriptLog "ERROR: '$process' could not be terminated."
+        fi
+    else
+        updateScriptLog "The '$process' process isn't running."
+    fi
 }
 
 quitScript() {
@@ -957,18 +972,19 @@ doInstallations() {
         swiftDialogUpdate "infobox: **Updates:** $queuedLabelsArrayLength"
     fi
 
+    i=0
     for label in $queuedLabelsArray
     do
         updateScriptLog "${scriptFunctionalName}: Installing ${label}..."
         swiftDialogUpdate "progress: increment ${progressIncrementValue}"
         
-        # Use built in SwiftDialog Installomator integration options (if swift dialog is being used)
+        # Use built in swiftDialog Installomator integration options (if swiftDialog is being used)
         swiftDialogOptions=()
         if $useswiftdialog
         then
             swiftDialogOptions+=(DIALOG_CMD_FILE="\"${dialogCommandFile}\"")
             
-            # Get the "name=" value from the current label and use it in our SwiftDialog list
+            # Get the "name=" value from the current label and use it in our swiftDialog list
             currentDisplayName=$(sed -n '/# label descriptions/,$p' ${installomatorPath} | grep -i -A 50 "${label})" | grep -m 1 "name=" | sed 's/.*=//' | sed 's/"//g')
             # There are some weird \' shenanigans here because Installomator passes this through eval
             swiftDialogOptions+=(DIALOG_LIST_ITEM_NAME=\'"${currentDisplayName}"\')
@@ -976,6 +992,8 @@ doInstallations() {
 
             swiftDialogUpdate "icon: /Applications/${currentDisplayName}.app"
             swiftDialogUpdate "progresstext: Checking ${currentDisplayName} …"
+            swiftDialogUpdate "listitem: index: $i, status: wait, statustext: Checking …"
+
         fi
         
         # Run Installomator
@@ -984,6 +1002,7 @@ doInstallations() {
             error "Error installing ${label}. Exit code $?"
             let errorCount++
         fi
+        let i++
     done
     
     notice "Errors: $errorCount"
