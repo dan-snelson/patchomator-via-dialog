@@ -20,7 +20,7 @@
 #   - Additional cleanup
 #
 #   Version 1.0.8, 17-May-2023 Dan K. Snelson (@dan-snelson)
-#   - Changed extension to `.zsh` (to quite Shellcheck)
+#   - Changed extension to `.zsh` (to quiet Shellcheck)
 #   - More dialog tweaks
 #
 ####################################################################################################
@@ -326,8 +326,8 @@ updateScriptLog "PRE-FLIGHT CHECK: Complete"
 
 caffExit () {
     updateScriptLog "${scriptFunctionalName}: De-caffeinate $scriptPID..."
-    killProcess "$scriptPID"
-    exit #$1
+    killProcess "caffeinate"
+    exit 0
 }
 
 ### Logging functions ###
@@ -485,7 +485,7 @@ completeSwiftDialogWrite(){
 swiftDialogUpdate(){
     infoOut "Update swiftDialog: $1" 
     echo "$1" >> "$dialogCommandFile"
-    sleep 0.4
+    # sleep 0.4
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
