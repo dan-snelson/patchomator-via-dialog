@@ -686,8 +686,7 @@ verifyApp() {
     
     appPath=$1
     notice "Verifying: $appPath"
-    if $useswiftdialog
-    then
+    if $useswiftdialog; then
         swiftDialogUpdate "icon: $appPath"
         swiftDialogUpdate "progresstext: Verifying $appPath"
     fi
@@ -697,14 +696,12 @@ verifyApp() {
     appVerifyStatus=$(echo $?)
     teamID=$(echo $appVerify | awk '/origin=/ {print $NF }' | tr -d '()' )
     
-    if [[ $appVerifyStatus -ne 0 ]]
-    then
+    if [[ $appVerifyStatus -ne 0 ]]; then
         error "Error verifying $appPath"
         return
     fi
     
-    if [ "$expectedTeamID" != "$teamID" ]
-    then
+    if [ "$expectedTeamID" != "$teamID" ]; then
         error "Error verifying $appPath"
         notice "Team IDs do not match: expected: $expectedTeamID, found $teamID"
         return
@@ -720,49 +717,44 @@ ${current_label}
 echo "\$appNewVersion" 
 SCRIPT_EOF
 )
-    fi
-    
-    # build array of labels for the config and/or installation
-    
-    # push label to array
-    # if in write config mode, writes to plist. Otherwise to an array.
-    # Test if label name in ignored labels
-    if [[ ! " ${ignoredLabelsArray[@]} " =~ " ${label_name} " ]]; then
-        if [[ -n "$configArray[$appPath]" ]]; then
-            exists="$configArray[$appPath]"
-        
-            infoOut "${appPath} already linked to label ${exists}."
-            if [[ ${#noninteractive} -eq 1 ]]; then
-                echo "Skipping."
-                return
-            else
-                notice "Replacing label ${exists} with $label_name?"
-            
-                configArray[$appPath]=$label_name
-                
-                /usr/libexec/PlistBuddy -c "set \":${appPath}\" ${label_name}" "$patchomatorconfigFile"
-            fi
+        # Check if app needs update, if so populate the plist 
+        if [[ "$appversion" == "$newversion" ]]; then
+            notice "--- Latest version already installed"
         else
-            
-            configArray[$appPath]=$label_name
-
-            /usr/libexec/PlistBuddy -c "add \":${appPath}\" string ${label_name}" "$patchomatorconfigFile"
-
+            if [[ ! " ${ignoredLabelsArray[@]} " =~ " ${label_name} " ]]; then
+                if [[ -n "$configArray[$appPath]" ]]; then
+                    exists="$configArray[$appPath]"
+                    
+                    infoOut "${appPath} already linked to label ${exists}."
+                    if [[ ${#noninteractive} -eq 1 ]]; then
+                        echo "Skipping."
+                        return
+                    else
+                        notice "--- Update found for $label_name, version $newversion, writing to PLIST"
+                        
+                        notice "Replacing label ${exists} with $label_name?"
+                        
+                        configArray[$appPath]=$label_name
+                        
+                        /usr/libexec/PlistBuddy -c "set \":${appPath}\" ${label_name}" "$patchomatorconfigFile"
+                        
+                        queueLabel
+                        
+                    fi
+                else
+                    
+                    notice "--- Update found for $label_name, version $newversion, writing to PLIST"
+                    
+                    configArray[$appPath]=$label_name
+                    
+                    /usr/libexec/PlistBuddy -c "add \":${appPath}\" string ${label_name}" "$patchomatorconfigFile"
+                    
+                    queueLabel
+                    
+                fi
+            fi
         fi
     fi
-    
-    
-    notice "--- Installed version: ${appversion}"
-    
-    [[ -n "$newversion" ]] && notice "--- Newest version: ${newversion}"
-    
-    if [[ "$appversion" == "$newversion" ]]
-    then
-        notice "--- Latest version installed."
-    else
-        queueLabel
-    fi
-    
 }
 
 queueLabel() {
