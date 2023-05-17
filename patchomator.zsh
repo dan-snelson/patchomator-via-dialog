@@ -93,7 +93,6 @@ overlayicon="/var/tmp/overlayicon.icns"
 dialogListConfigurationOptions=(
     --title "${scriptFunctionalName} (${scriptVersion})"
     --message "Updating the following apps …"
-    --overlayicon "$overlayicon"
     --commandfile "$dialogCommandFile"
     --ontop
     --moveable
@@ -328,7 +327,7 @@ updateScriptLog "PRE-FLIGHT CHECK: Complete"
 caffExit () {
     updateScriptLog "${scriptFunctionalName}: De-caffeinate $scriptPID..."
     kill "$scriptPID"
-    exit $1
+    exit #$1
 }
 
 ### Logging functions ###
@@ -348,6 +347,11 @@ infoOut() {
 
 error() {
     updateScriptLog "${scriptFunctionalName}: [ERROR] $1"
+    let errorCount++
+}
+
+warning() {
+    updateScriptLog "${scriptFunctionalName}: [WARNING] $1"
     let errorCount++
 }
 
@@ -432,6 +436,7 @@ completeSwiftDialogList(){
     if $useswiftdialog
     then
         # swiftDialogCommand "listitem: add, title: Updates Complete!,status: success"
+        swiftDialogUpdate "icon: $icon"
         swiftDialogUpdate "progress: complete"
         swiftDialogUpdate "progresstext: Updates Complete!"
         
@@ -479,7 +484,7 @@ checkInstallomator() {
     
     if ! [[ -f $installomatorPath ]]
     then
-        error "Installomator was not found at $installomatorPath"
+        warning "Installomator was not found at $installomatorPath"
         
         LatestInstallomator=$(curl --silent --fail "https://api.github.com/repos/Installomator/Installomator/releases/latest" | awk -F '"' "/browser_download_url/ && /pkg\"/ { print \$4; exit }")
         
@@ -567,7 +572,7 @@ checkLabels() {
         then
             if [[ -w "$patchomatorPath" ]]
             then
-                error "Package labels are out of date. Last updated ${labelsAge} days ago. Attempting to download from https://github.com/installomator/"
+                warning "Package labels are out of date. Last updated ${labelsAge} days ago. Attempting to download from https://github.com/installomator/"
                 downloadLatestLabels
             else
                 fatal "Package labels are out of date. Last updated ${labelsAge} days ago. Re-run patchomator with sudo to update them."
@@ -969,7 +974,7 @@ doInstallations() {
             swiftDialogOptions+=(DIALOG_LIST_ITEM_NAME=\'"${currentDisplayName}"\')
             sleep .5
 
-            swiftDialogUpdate "icon: ${currentDisplayName} …"
+            swiftDialogUpdate "icon: /Applications/${currentDisplayName}.app"
             swiftDialogUpdate "progresstext: Checking ${currentDisplayName} …"
         fi
         
@@ -989,8 +994,10 @@ doInstallations() {
     # Remove Installomator
     removeInstallomator
     
-    caffExit $errorCount
-    
+    infoOut "Error Count $errorCount" 
+
+    caffExit
+
 }
 
 oldIFS=$IFS
