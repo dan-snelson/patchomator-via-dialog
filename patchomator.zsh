@@ -436,7 +436,7 @@ completeSwiftDialogList(){
     if $useswiftdialog
     then
         # swiftDialogCommand "listitem: add, title: Updates Complete!,status: success"
-        swiftDialogUpdate "icon: $icon"
+        swiftDialogUpdate "icon: SF=checkmark.circle.fill,weight=bold,colour1=#00ff44,colour2=#075c1e"
         swiftDialogUpdate "progress: complete"
         swiftDialogUpdate "progresstext: Updates Complete!"
         
