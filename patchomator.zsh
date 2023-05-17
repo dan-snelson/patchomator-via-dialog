@@ -97,6 +97,7 @@ dialogListConfigurationOptions=(
     --commandfile "$dialogCommandFile"
     --ontop
     --moveable
+    --button1text "Done"
     --button1disabled
     --height 450
     --width 650
@@ -107,13 +108,14 @@ dialogListConfigurationOptions=(
     --messagefont size=11
     --quitkey k
     --icon "$icon"
+    --overlayicon "$overlayicon"
 )
-    # --iconsize 128
 
 dialogWriteConfigurationOptions=(
     --title "${scriptFunctionalName} (${scriptVersion})"
     --message "Analyzing installed apps …"
     --icon "$icon"
+    --overlayicon "$overlayicon"
     --commandfile "$dialogCommandFile"
     --ontop
     --moveable
@@ -124,7 +126,6 @@ dialogWriteConfigurationOptions=(
     --quitkey k
 )
 
-    # --overlayicon "$overlayicon"
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -173,7 +174,7 @@ function currentLoggedInUser() {
 # Pre-flight Check: Logging Preamble
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-updateScriptLog "\n\n###\n# ${scriptFunctionalName} (${scriptVersion})\n# \n###\n"
+updateScriptLog "\n\n###\n# ${scriptFunctionalName} (${scriptVersion})\n###\n"
 updateScriptLog "PRE-FLIGHT CHECK: Initiating …"
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -667,6 +668,7 @@ verifyApp() {
     notice "Verifying: $appPath"
     if $useswiftdialog
     then
+        swiftDialogUpdate "icon: $appPath"
         swiftDialogUpdate "progresstext: Verifying $appPath"
     fi
     
@@ -936,10 +938,6 @@ doInstallations() {
     
     infoOut "Installomator Options: $InstallomatorOptions"
     
-    # No sleeping
-    /usr/bin/caffeinate -d -i -m -u &
-    caffeinatepid=$!
-    
     # Count errors
     errorCount=0
     
@@ -970,11 +968,9 @@ doInstallations() {
             # There are some weird \' shenanigans here because Installomator passes this through eval
             swiftDialogOptions+=(DIALOG_LIST_ITEM_NAME=\'"${currentDisplayName}"\')
             sleep .5
-            
-            if $useswiftdialog
-            then
-                swiftDialogUpdate "progresstext: Checking ${currentDisplayName} …"
-            fi
+
+            swiftDialogUpdate "icon: ${currentDisplayName} …"
+            swiftDialogUpdate "progresstext: Checking ${currentDisplayName} …"
         fi
         
         # Run Installomator
